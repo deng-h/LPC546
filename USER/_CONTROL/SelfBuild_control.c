@@ -15,8 +15,8 @@ float g_fGyroYRead;
 float g_fGyroZRead;
 float g_fGyroXRead;
 
-float Steer_KP=0.0;//舵机方向比例系数
-float Steer_KD=16.4;//舵机微分系数，影响舵机的打角反应
+float Steer_KP=0.5;//舵机方向比例系数
+float Steer_KD=0;//舵机微分系数，影响舵机的打角反应
 float SteerPwmAdd=0.0;//舵机pwm增量
 float SteerError;//偏差值
 float SteerLastError;//上次偏差值
@@ -26,7 +26,7 @@ float CenterSum=0;
 float J=0.0290;//调节p和偏差的关系，越大作用越强
 float BasicP=3.0; //基本的p值
 uint32 SteerPwm=0,LastSteerPwm=0;//本次舵机pwm和上次的pwm
-float Weight[10] = {1,1,1,1,1,1,1,1,1,1};  //每10行的权重，总共100行
+float Weight[10] = {0,0,1,1,1.5,1.8,2,2,3,3};  //每10行的权重，总共100行
 extern uint8  CenterPoint[100];
 
 
@@ -42,16 +42,13 @@ void SteerErrorCalcu(void)
 		CenterSum += CenterPoint[i]*Weight[i/10];
 		WeightSum += Weight[i/10]; 
 	}
-	
-	if(WeightSum!=0) CenterMeanValue=(CenterSum/WeightSum);  //算出加权平均后的中线值
-	                  
+	if(WeightSum!=0) CenterMeanValue=(CenterSum/WeightSum);  //算出加权平均后的中线值                  
   SteerLastError = SteerError;
-	SteerError=(CenterMeanValue - MT9V032_W/2);//一副图片的偏差
-	//把误差值发送到上位机上查看范围来确定其他参数的设定
-	
+	SteerError=(MT9V032_W/2 - CenterMeanValue);//一副图片的偏差
+  SteerError = SteerError;
 	//偏差限幅
-	Steer_KP=BasicP+(SteerError* SteerError)*J;//动态二次p模型      
-  if(Steer_KP>=11) Steer_KP = 11;//p值限幅  此处需要根据实际情况改！！！
+//	Steer_KP=BasicP+(SteerError* SteerError)*J;//动态二次p模型      
+//  if(Steer_KP>=11) Steer_KP = 11;//p值限幅  此处需要根据实际情况改！！！
 	
 }
 
@@ -60,14 +57,13 @@ void SteerControl(void)
 	SteerErrorCalcu();
 	
 	SteerPwmAdd=(Steer_KP*SteerError)+Steer_KD*(SteerError-SteerLastError);  //pd增量式
-	//SteerPwmAdd限幅
 	
 	SteerPwm=(uint32)(SteerPwmAdd+SteerMid);
 	
 	if(SteerPwm > SteerMAX) SteerPwm = SteerMAX;  //pwm输出限幅
-	if(SteerPwm < SteerMIX) SteerPwm = SteerMIX;
+	if(SteerPwm < SteerMIN) SteerPwm = SteerMIN;
 	
-	ctimer_pwm_duty(Servo,SteerPwm);
+//	ctimer_pwm_duty(Servo,SteerPwm);
 }
 
 
@@ -248,8 +244,8 @@ void Oledshow(void)
 		    Button_flag=Button_get();
 				if(Button_flag==0x01)
 				{
-				    g_nSpeedLeft_set=100;
-						g_nSpeedRight_set=100;
+				    g_nSpeedLeft_set=50;
+						g_nSpeedRight_set=50;
 				}
 				if(Button_flag==0x02)
 				{
@@ -347,9 +343,9 @@ void UI_Send(void)
 {
   float UI_Data[8] = {0};
   
-  UI_Data[0] = 0;
-  UI_Data[1] = 0;
-  UI_Data[2] = 0;
+  UI_Data[0] = SteerError;
+  UI_Data[1] = SteerPwm;
+  UI_Data[2] = SteerPwmAdd;
   UI_Data[3] = 0;
   UI_Data[4] = 0;
 	UI_Data[5] = 0;

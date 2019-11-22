@@ -3,7 +3,6 @@
 uint8  CenterPoint[100];  //存放中心线的x坐标
 
 
-
 /*
 扫线程序，对于0~99行，找到白色左边界和白色右边界，从而确定白色区域的中心位置
 OLED的底面是height(188)，y为188时有可能在OLED上看不到有可能时OLED屏幕大小与图像尺寸不一样
@@ -58,7 +57,7 @@ void ScanLine(uint8 * imageRet, int width, int height)
 			IMAGE_DATA((xLeft + xRight) / 2, yNow) = LINE;
 			IMAGE_DATA((xLeft + xRight) / 2 + 1, yNow) = LINE;
 			IMAGE_DATA((xLeft + xRight) / 2 - 1, yNow) = LINE;
-			CenterPoint[index++] = (xLeft + xRight) / 2;  
+			CenterPoint[index++] = (xLeft + xRight) / 2;
 			if(index >= 100) index = 99;
 		}
 		else break;
@@ -66,6 +65,40 @@ void ScanLine(uint8 * imageRet, int width, int height)
 }
 
 
+/*
+计算中心线的斜率
+方法：线性回归方程求斜率
+param:起始行和终止行
+return:斜率
+*/
+float CenterSlope(int startline, int endline)
+{
+	if(endline >= 100) endline = 99;
+	int i;
+	int sumX=0,sumY=0,averX=0,averY=0;
+	int num=0,B_up1=0,B_up2=0,B_up,B_down;  //up是分子，down是分母，分子有两个
+	float B;
+	for(i=startline;i<=endline;i++)
+  {
+		num++;
+    sumX += i;
+    sumY += CenterPoint[i];
+  }
+	 averX=sumX/num;  //求出x方向和y方向的平均值
+   averY=sumY/num;
+   B_up=0;
+   B_down=0;
+   for(i=startline;i<=endline;i++)  //Sigma
+   {   
+		 B_up1=(int)(CenterPoint[i]-averY);
+		 B_up2=i-averX;
+		 B_up += (int)(B_up1*B_up2);
+		 B_down += (int)((i-averX)*(i-averX));
+   }
+   if(B_down==0) B=0.0;
+   else B = B_up/B_down;
+   return B;
+}
 
 
 

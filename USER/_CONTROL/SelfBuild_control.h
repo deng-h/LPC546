@@ -6,7 +6,7 @@
 #define FULL_duty  1000  
 #define SteerMid 105
 #define SteerMAX 119
-#define SteerMIX 91
+#define SteerMIN 91
 
 extern int16 g_nLeft_duty;
 extern int16 g_nRight_duty;
