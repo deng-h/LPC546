@@ -1,7 +1,7 @@
 #include "ImageProcess.h"
 
-uint8  CenterPoint[100];  //存放中心线的x坐标
-
+uint8 CenterPoint[100];  //存放中心线的x坐标
+float Slope=0;  //中线斜率
 
 /*
 扫线程序，对于0~99行，找到白色左边界和白色右边界，从而确定白色区域的中心位置
@@ -14,7 +14,7 @@ void ScanLine(uint8 * imageRet, int width, int height)
 	int temp;
 	for(i = 0;i < 100;i++) CenterPoint[i] = 0;  
 	for (temp = 0; temp < width - 3; ++temp)  //从左往右扫 
-		if (IMAGE_DATA(temp, height-1) == WHITEimg && IMAGE_DATA(temp + 1, height-1) == WHITEimg && IMAGE_DATA(temp + 2, height-1) == WHITEimg && IMAGE_DATA(temp + 3, height-1) == WHITEimg)
+		if (IMAGE_DATA(temp, height-1) == WHITEimg && IMAGE_DATA(temp + 1, height-1) == WHITEimg && IMAGE_DATA(temp + 2, height-1) == WHITEimg && IMAGE_DATA(temp + 3, height-1) == WHITEimg)      
 			break;
 	xLeft = temp;
 	for (temp = width - 1; temp >= 3; --temp) //从右往左扫 
@@ -27,13 +27,13 @@ void ScanLine(uint8 * imageRet, int width, int height)
 		
 	CenterPoint[index++] = (xLeft + xRight) / 2;  
 		
-	for (int yNow = height-2; yNow > height - 100; --yNow)  //从底面开始扫，100行
+	for (int yNow = height - 2; yNow > height - 100; --yNow)  //从底面开始扫，100行
 	{
 		int xLeftNow = 0, xRightNow = 0;
 
 		if (xLeft > 0)
 		{
-			for (xLeftNow = xLeft; xLeftNow >= 0 && IMAGE_DATA(xLeftNow, yNow) == WHITEimg && IMAGE_DATA(xLeftNow + 1, yNow) == WHITEimg; --xLeftNow);//???????? 
+			for (xLeftNow = xLeft; xLeftNow >= 0 && IMAGE_DATA(xLeftNow, yNow) == WHITEimg && IMAGE_DATA(xLeftNow + 1, yNow) == WHITEimg; --xLeftNow); 
 			if (xLeftNow == xLeft)//如果左边没有白点了
 			{
 				for (xLeftNow = xLeft; xLeft < width && IMAGE_DATA(xLeftNow, yNow) == BLACKimg; ++xLeftNow);//左边界往右找白点
@@ -43,7 +43,7 @@ void ScanLine(uint8 * imageRet, int width, int height)
 
 		if (xRight < width - 1)  
 		{
-			for (xRightNow = xRight; xRightNow < width && IMAGE_DATA(xRightNow, yNow) == WHITEimg && IMAGE_DATA(xRightNow - 1, yNow) == WHITEimg; ++xRightNow);//????????
+			for (xRightNow = xRight; xRightNow < width && IMAGE_DATA(xRightNow, yNow) == WHITEimg && IMAGE_DATA(xRightNow - 1, yNow) == WHITEimg; ++xRightNow);
 			if (xRightNow == xRight)//如果右边没有白点了
 			{
 				for (xRightNow = xRight; xRightNow >= 0 && IMAGE_DATA(xRightNow, yNow) == BLACKimg; --xRightNow);//右边界往左找白点
@@ -59,8 +59,13 @@ void ScanLine(uint8 * imageRet, int width, int height)
 			IMAGE_DATA((xLeft + xRight) / 2 - 1, yNow) = LINE;
 			CenterPoint[index++] = (xLeft + xRight) / 2;
 			if(index >= 100) index = 99;
+//			if((CenterPoint[index-1]-CenterPoint[index-2])>4 && yNow>40 && Slope>0)  //中线滤波防止中线出现毛刺
+//				CenterPoint[index-1] = CenterPoint[index-2] + 1;
+//			if((CenterPoint[index-1]-CenterPoint[index-2])<-4 && yNow>40 && Slope<0)
+//				CenterPoint[index-1] = CenterPoint[index-2] - 1;
 		}
 		else break;
+		
 	}
 }
 
@@ -77,7 +82,6 @@ float CenterSlope(int startline, int endline)
 	int i;
 	int sumX=0,sumY=0,averX=0,averY=0;
 	int num=0,B_up1=0,B_up2=0,B_up,B_down;  //up是分子，down是分母，分子有两个
-	float B;
 	for(i=startline;i<=endline;i++)
   {
 		num++;
@@ -92,12 +96,13 @@ float CenterSlope(int startline, int endline)
    {   
 		 B_up1=(int)(CenterPoint[i]-averY);
 		 B_up2=i-averX;
-		 B_up += (int)(B_up1*B_up2);
-		 B_down += (int)((i-averX)*(i-averX));
+		 B_up += (int)(10*B_up1*B_up2);
+		 B_up=B_up/100*100;
+		 B_down += (int)(10*((i-averX)*(i-averX)));
    }
-   if(B_down==0) B=0.0;
-   else B = B_up/B_down;
-   return B;
+   if(B_down==0) Slope=0.0;
+   else Slope = 16 * B_up/B_down;
+	 return Slope;
 }
 
 
