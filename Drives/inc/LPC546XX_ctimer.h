@@ -163,11 +163,11 @@ typedef enum
 #define TIMER3_PWM_PERIOD_CH    TIMER3_PWMCH0_A5      //定时器3 PWM周期占用的的通道，被占用的通道不能用于输出PWM（包含该通道其他引脚也不能输出PWM）
 #define TIMER4_PWM_PERIOD_CH    TIMER4_PWMCH1_P4_14   //定时器4 PWM周期占用的的通道，被占用的通道不能用于输出PWM（包含该通道其他引脚也不能输出PWM）
 
-#define TIMER0_PWM_DUTY_MAX     1000                 //定时器0 PWM最大占空比  最大占空比越大占空比的步进值越小
-#define TIMER1_PWM_DUTY_MAX     1000                 //定时器1 PWM最大占空比  最大占空比越大占空比的步进值越小
-#define TIMER2_PWM_DUTY_MAX     1000                 //定时器2 PWM最大占空比  最大占空比越大占空比的步进值越小
-#define TIMER3_PWM_DUTY_MAX     1000                 //定时器3 PWM最大占空比  最大占空比越大占空比的步进值越小
-#define TIMER4_PWM_DUTY_MAX     1000                //定时器4 PWM最大占空比  最大占空比越大占空比的步进值越小
+#define TIMER0_PWM_DUTY_MAX     10000                 //定时器0 PWM最大占空比  最大占空比越大占空比的步进值越小
+#define TIMER1_PWM_DUTY_MAX     10000                 //定时器1 PWM最大占空比  最大占空比越大占空比的步进值越小
+#define TIMER2_PWM_DUTY_MAX     10000                 //定时器2 PWM最大占空比  最大占空比越大占空比的步进值越小
+#define TIMER3_PWM_DUTY_MAX     10000                 //定时器3 PWM最大占空比  最大占空比越大占空比的步进值越小
+#define TIMER4_PWM_DUTY_MAX     10000                //定时器4 PWM最大占空比  最大占空比越大占空比的步进值越小
 
 void    ctimer_pwm_init(CTIMER_PWMCH_enum pwmch, uint32 freq, uint32 duty);
 void    ctimer_pwm_duty(CTIMER_PWMCH_enum pwmch, uint32 duty);

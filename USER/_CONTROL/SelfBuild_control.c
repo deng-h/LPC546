@@ -1,5 +1,7 @@
 #include "SelfBuild_control.h"
 
+#define FILTER_P 0.1  //滤波系数
+
 int16 g_nLeft_duty=0;
 int16 g_nRight_duty=0;
 int16 g_nSpeedLeft=0; 
@@ -8,66 +10,78 @@ int16 g_nSpeedLeft_set=0;
 int16 g_nSpeedRight_set=0;
 
 float pitch = 0, roll = 0, yaw = 0;//欧拉角
-int16 fGyroY=0;//Y轴角速度
-int16 fGyroZ=0;//Z轴角速度
-int16 fGyroX=0;//x轴角速度
 float g_fGyroYRead;
 float g_fGyroZRead;
 float g_fGyroXRead;
+int16 fGyroY=0;//Y轴角速度
+int16 fGyroZ=0;//Z轴角速度
+int16 fGyroX=0;//x轴角速度
 
-float Steer_KP=0.5;//舵机方向比例系数
-float Steer_KD=0.02;//舵机微分系数，影响舵机的打角反应
 float Steer_Pk=0.0;//由斜率slope得出的控制比例系数
-float SteerPwmAdd=0.0;//舵机pwm增量
-float SteerError;//偏差值
-float SteerLastError;//上次偏差值
-float WeightSum=0;//权重之和
-float CenterMeanValue=0;
-float CenterSum=0;
-float J=0.0090;//调节p和偏差的关系，越大作用越强
-float BasicP=0.0; //基础p值
-uint32 SteerPwm=0,LastSteerPwm=0;//本次舵机pwm和上次的pwm
-float Weight[10] = {1,1.5,2,2,2,1.8,1.2,1,1,0.8};  //每10行的权重，总共100行
-extern uint8  CenterPoint[100];
+float WeightSum=0.0;
+float CenterMeanValue=0.0;
+float CenterSum=0.0;
+float LastFilter=0.0;
+float SteerPwmAdd=0.0;
+float SlopeNear=0.0,SlopeFar=0.0,SlopeGlobal=0.0;
+float Weight[10] = {1,1.5,2.3,2.3,2,1.8,1,0.8,0.8,0.6};  
+uint8 GuaiDian=0;
+uint8 LShiZiFlg=0,RShiZiFlg=0;
+uint32 SteerPwm=0;
+
+extern uint8 CenterPoint[100];
 extern float Slope;
 
 void SteerErrorCalcu(void)
 {
-	int i;
-	CenterSum=0;
-	CenterMeanValue=0;
-	WeightSum=0;
+	int i=0;
+	CenterSum=0,WeightSum=0;
+  LShiZiFlg=0,RShiZiFlg=0;
+	SlopeNear=0.0,SlopeFar=0.0,SlopeGlobal=0.0;
+	CenterMeanValue=0.0;
+	
+	SlopeNear   = CenterSlope(0,20);
+	SlopeFar    = CenterSlope(50,70);
+	SlopeGlobal = CenterSlope(10,70);
+	
+	if( (SlopeNear*SlopeFar < 0) && (DuanDian >= 5) && (SlopeGlobal > 2 || SlopeGlobal < -2) )
+	{
+		if(SlopeNear < 0) LShiZiFlg=1;
+		if(SlopeNear > 0) RShiZiFlg=1;
+	}
 	
 	for(i=0;i<100;i++)
 	{
 		CenterSum += CenterPoint[i]*Weight[i/10];
 		WeightSum += Weight[i/10]; 
 	}
-	if(WeightSum!=0) CenterMeanValue=(CenterSum/WeightSum);  //算出加权平均后的中线值                  
-  SteerLastError = SteerError;
-	SteerError=(MT9V032_W/2 - CenterMeanValue);//一副图片的偏差
-	//偏差限幅
-//	Steer_KP=BasicP+(SteerError* SteerError)*J;//动态二次p模型      
-//  if(Steer_KP>=1) Steer_KP = 1;//p值限幅  此处需要根据实际情况改！！！
+	if(WeightSum!=0) CenterMeanValue=(CenterSum/WeightSum);  
+	
+//  CenterMeanValue = LastFilter + (CenterMeanValue - LastFilter)*(FILTER_P/256);  //滤波
+//	LastFilter = CenterMeanValue;
 	
 }
+
+
 
 void SteerControl(void)
 {
 	SteerErrorCalcu();
-	Slope = CenterSlope(0,40);
-//	Steer_Pk = A*Slope*Slope + B*Slope + C;
-	SteerPwmAdd=(Steer_KP*SteerError)+Steer_KD*(SteerError-SteerLastError);  //pd增量式
-//	SteerPwmAdd=Steer_Pk*SteerError;
 	
-	if(Slope > 10) SteerPwmAdd=-14;
-	else if(Slope < -10) SteerPwmAdd=14;
+//	Angle = A*Slope*Slope + B*Slope + C; //二次曲线计算舵机角度
+//	SteerPwmAdd=Angle*SteerError;
 	
-	SteerPwm=(uint32)(SteerPwmAdd+SteerMid);
-	if(SteerPwm >= SteerMAX) SteerPwm = SteerMAX;  //pwm输出限幅
+	SteerPwmAdd = PID_Positional( &SteerPID, CenterMeanValue, 93);  //理论中间值有变动
+	
+	if((SlopeGlobal > 10) || RShiZiFlg) SteerPwmAdd = -140;  
+	else if ((SlopeGlobal < -10) || LShiZiFlg) SteerPwmAdd = 140;
+
+	SteerPwm = (uint32)(SteerMid + SteerPwmAdd);
+	
+	if(SteerPwm >= SteerMAX) SteerPwm = SteerMAX; 
 	if(SteerPwm <= SteerMIN) SteerPwm = SteerMIN;
-	
 	ctimer_pwm_duty(Servo,(uint32)SteerPwm);
+
 }
 
 
@@ -248,8 +262,8 @@ void Oledshow(void)
 		    Button_flag=Button_get();
 				if(Button_flag==0x01)
 				{
-				    g_nSpeedLeft_set=50;
-						g_nSpeedRight_set=50;
+				    g_nSpeedLeft_set=100;
+						g_nSpeedRight_set=100;
 				}
 				if(Button_flag==0x02)
 				{
@@ -347,10 +361,10 @@ void UI_Send(void)
 {
   float UI_Data[8] = {0};
   
-  UI_Data[0] = SteerError;
-  UI_Data[1] = Slope;
-  UI_Data[2] = SteerPwmAdd;
-  UI_Data[3] = 0;
+  UI_Data[0] = DuanDian;
+  UI_Data[1] = CenterSlope(0,10);
+  UI_Data[2] = CenterSlope(30,50);
+  UI_Data[3] = CenterSlope(50,70);
   UI_Data[4] = 0;
 	UI_Data[5] = 0;
   UI_Data[6] = 0;

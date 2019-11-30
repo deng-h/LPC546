@@ -92,7 +92,7 @@ B15 B14 A29 A22 A21 A17	任意交换
 
 int main(void)
 {   
-  get_clk();//这一句必须要写
+	get_clk();//这一句必须要写
 	oled_init();
   /*----------------------------按键--------------------------------*/
 	gpio_init(Button_Up, GPI, 1,PULLUP);
@@ -111,7 +111,7 @@ int main(void)
 /*----------------------------电机初始化-------------------------------*/
 	sct_pwm_init(PWM_CH_L_Z, 12500, 0);
 	sct_pwm_init(PWM_CH_L_F, 12500, 0);
-  sct_pwm_init(PWM_CH_R_Z, 12500, 0);
+	sct_pwm_init(PWM_CH_R_Z, 12500, 0);
 	sct_pwm_init(PWM_CH_R_F, 12500, 0); 
 	sct_pwm_duty(PWM_CH_L_Z,900);
 	sct_pwm_duty(PWM_CH_L_F,1000);
@@ -120,25 +120,29 @@ int main(void)
 	eeprom_init();
 	Menu_Init();                                  //初始化菜单
 	while(!Menu_Work()) systick_delay_ms(200);    //菜单每200ms工作一次，并根据是否按下“关闭菜单”选项后（函数返回0）结束死循环
-	Correct_Sensor();
+//	Correct_Sensor();
+	PID_Parameter_Init(&SteerPID);
+	PID_Parameter_Init(&Left_motor_pid);
+	PID_Parameter_Init(&Right_motor_pid);
 	/*---------------------------定时器中断--------------------------------*/
 	mrt_pit_init_ms(MRT_CH0,10);  //重点去看定时器中断服务函数里的东西
 	uart_init(Bluetooth_UART,115200, Bluetooth_UART_TXD, Bluetooth_UART_RXD);
-  enable_irq(FLEXCOMM3_IRQn);
+	enable_irq(FLEXCOMM3_IRQn);
 	enable_irq(FLEXCOMM5_IRQn);
-  EnableInterrupts;	
+	EnableInterrupts;	
 	while(1)
 	{
 		if(mt9v032_finish_flag)   //图像传输完毕
-			{
-				mt9v032_finish_flag = 0;
-				Threshold_Value=my_adapt_threshold((uint8 *)image, COL,ROW);//大律法算出阈值 已经过优化 时间约为1ms
-				GrayscaleToBinary((uint8 *)image, (uint8 *)CameraBinary,Threshold_Value, ROW*COL);//二值化 
-				ScanLine((uint8 *)CameraBinary, MT9V032_W, MT9V032_H);
-			}
+		{
+			mt9v032_finish_flag = 0;
+			Threshold_Value=my_adapt_threshold((uint8 *)image, COL,ROW);//大律法算出阈值 已经过优化 时间约为1ms
+			GrayscaleToBinary((uint8 *)image, (uint8 *)CameraBinary,Threshold_Value, ROW*COL);//二值化 
+			ScanLine((uint8 *)CameraBinary, MT9V032_W, MT9V032_H);
+		}
 		Oledshow();
 		SteerControl();
 		UI_Send();
+		
   }
 }
 

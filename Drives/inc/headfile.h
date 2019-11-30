@@ -64,4 +64,5 @@
 #include "SelfBuild_mcp41.h"
 #include "SelfBuild_correct_sensor.h"
 #include "ImageProcess.h"
+#include "string.h"
 #endif

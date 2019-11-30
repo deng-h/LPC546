@@ -4,9 +4,9 @@
 #include "headfile.h"
 
 #define FULL_duty  1000  
-#define SteerMid 105
-#define SteerMAX 119
-#define SteerMIN 91
+#define SteerMid 1050
+#define SteerMAX 1190
+#define SteerMIN 910
 
 extern int16 g_nLeft_duty;
 extern int16 g_nRight_duty;
@@ -16,17 +16,9 @@ extern int16 g_nSpeedLeft_set;
 extern int16 g_nSpeedRight_set;
 
 extern float Weight[10];//权重
-extern float Steer_KP;//舵机方向比例系数
-extern float Steer_KD;//舵机微分系数，影响舵机的打角反应
-extern float SteerPwmAdd;//舵机pwm增量
-extern float SteerError;//偏差值
-extern float SteerLastError;//上次偏差值
-extern float WeightSum;//权重之和
 extern float CenterMeanValue;
-extern float CenterSum;
-extern float J;//调节p和偏差的关系，越大作用越强
-extern float BasicP; //基本的p值
-extern uint32 SteerPwm,LastSteerPwm;//本次舵机pwm和上次的pwm
+extern uint32 SteerPwm;
+extern float SteerPwmAdd;
 
 extern float pitch, roll, yaw;//欧拉角
 extern int16 fGyroY;//Y轴角速度

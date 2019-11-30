@@ -18,23 +18,8 @@ typedef struct
 	float SumError;//累计误差
 }PID;
 
-typedef struct
-{
-	float Proportion; //参加PID运算的参数
-  float Derivative; 
-  float ProportionL; //左
-  float DerivativeL; 
-  float ProportionR; //右
-  float DerivativeR; 
-  float ProportionIL; //环岛？
-  float ProportionIR; 
-  int LastError; //上次误差
-  float steer_out;  //输出
-  int iError;  //当前误差
-}STEER;
 
-
-void steer_calcu(void);  //舵机的计算
+extern PID SteerPID;
 extern PID Left_motor_pid;
 extern PID Right_motor_pid;
 

@@ -1,6 +1,12 @@
 #include "SelfBuild_PID.h"
 
-STEER steer={0,0,3.70,13,4.5,13.0,3.3,3,0,0,0};  //赋初值
+PID SteerPID = {  //舵机PID
+				3.5,
+				0,
+				7,
+				140,
+				-140,
+};
 
 PID Left_motor_pid= {
           2,//P3.6
@@ -48,8 +54,8 @@ float PID_Positional(PID* PID_Ptr, float speed_real, float speed_ask)//位置式PID
   if(PID_Ptr->error[2]  <  -50) PID_Ptr->error[2] = -50;
 	
   Positional = PID_Ptr->P * PID_Ptr->error[0] + 
-                     PID_Ptr->I * PID_Ptr->error[2] +
-                     PID_Ptr->D * (PID_Ptr->error[0] - PID_Ptr->error[1]);//计算PID
+               PID_Ptr->I * PID_Ptr->error[2] +
+               PID_Ptr->D * (PID_Ptr->error[0] - PID_Ptr->error[1]);//计算PID
   
   PID_Ptr->error[1] = PID_Ptr->error[0];
   if(Positional >PID_Ptr-> MAX) Positional =PID_Ptr-> MAX;//PID限幅
@@ -69,9 +75,5 @@ void PID_Parameter_Init(PID *sptr)
 	sptr->SumError= 0;
 }  
 
-void steer_calcu(void)
-{
-	
-}
 
 
