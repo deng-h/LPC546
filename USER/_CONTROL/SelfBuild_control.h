@@ -4,9 +4,9 @@
 #include "headfile.h"
 
 #define FULL_duty  1000  
-#define SteerMid 1050
-#define SteerMAX 1190
-#define SteerMIN 910
+#define ServoMid 1050
+#define ServoMAX 1190
+#define ServoMIN 910
 
 extern int16 g_nLeft_duty;
 extern int16 g_nRight_duty;
@@ -17,8 +17,8 @@ extern int16 g_nSpeedRight_set;
 
 extern float Weight[10];//权重
 extern float CenterMeanValue;
-extern uint32 SteerPwm;
-extern float SteerPwmAdd;
+extern uint32 ServoPwm;
+extern float ServoPwmAdd;
 
 extern float pitch, roll, yaw;//欧拉角
 extern int16 fGyroY;//Y轴角速度
@@ -34,8 +34,8 @@ void Speed_read(void);
 void DataRead(void);
 void Oledshow(void);
 void UI_Send(void);
-void SteerControl(void);
-void SteerErrorCalcu(void);
+void ServoControl(void);
+void ServoErrorCalcu(void);
 
 #endif
 

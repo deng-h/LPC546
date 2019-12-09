@@ -17,22 +17,22 @@ int16 fGyroY=0;//Y轴角速度
 int16 fGyroZ=0;//Z轴角速度
 int16 fGyroX=0;//x轴角速度
 
-float Steer_Pk=0.0;//由斜率slope得出的控制比例系数
+float Servo_Pk=0.0;//由斜率slope得出的控制比例系数
 float WeightSum=0.0;
 float CenterMeanValue=0.0;
 float CenterSum=0.0;
 float LastFilter=0.0;
-float SteerPwmAdd=0.0;
+float ServoPwmAdd=0.0;
 float SlopeNear=0.0,SlopeFar=0.0,SlopeGlobal=0.0;
-float Weight[10] = {1,1.5,2.3,2.3,2,1.8,1,0.8,0.8,0.6};  
+float Weight[10] = {1,1.5,2.3,2.3,2,1.8,1,0.8,0.8,0.6};  //150
 uint8 GuaiDian=0;
 uint8 LShiZiFlg=0,RShiZiFlg=0;
-uint32 SteerPwm=0;
+uint32 ServoPwm=0;
 
 extern uint8 CenterPoint[100];
 extern float Slope;
 
-void SteerErrorCalcu(void)
+void ServoErrorCalcu(void)
 {
 	int i=0;
 	CenterSum=0,WeightSum=0;
@@ -40,11 +40,11 @@ void SteerErrorCalcu(void)
 	SlopeNear=0.0,SlopeFar=0.0,SlopeGlobal=0.0;
 	CenterMeanValue=0.0;
 	
-	SlopeNear   = CenterSlope(0,20);
-	SlopeFar    = CenterSlope(50,70);
-	SlopeGlobal = CenterSlope(10,70);
+	SlopeNear   = CenterSlope(10,30);
+	SlopeFar    = CenterSlope(40,70);
+	SlopeGlobal = CenterSlope(10,60);
 	
-	if( (SlopeNear*SlopeFar < 0) && (DuanDian >= 5) && (SlopeGlobal > 2 || SlopeGlobal < -2) )
+	if( (SlopeNear*SlopeFar <= 0) && (SlopeFar*SlopeGlobal > 0) && (SlopeGlobal > 2 || SlopeGlobal < -2) )
 	{
 		if(SlopeNear < 0) LShiZiFlg=1;
 		if(SlopeNear > 0) RShiZiFlg=1;
@@ -54,6 +54,7 @@ void SteerErrorCalcu(void)
 	{
 		CenterSum += CenterPoint[i]*Weight[i/10];
 		WeightSum += Weight[i/10]; 
+		if((LShiZiFlg || RShiZiFlg) && (i >= 25)) break;
 	}
 	if(WeightSum!=0) CenterMeanValue=(CenterSum/WeightSum);  
 	
@@ -64,23 +65,23 @@ void SteerErrorCalcu(void)
 
 
 
-void SteerControl(void)
+void ServoControl(void)
 {
-	SteerErrorCalcu();
+	ServoErrorCalcu();
 	
 //	Angle = A*Slope*Slope + B*Slope + C; //二次曲线计算舵机角度
 //	SteerPwmAdd=Angle*SteerError;
 	
-	SteerPwmAdd = PID_Positional( &SteerPID, CenterMeanValue, 93);  //理论中间值有变动
+	ServoPwmAdd = PID_Positional( &ServoPID, CenterMeanValue, 93);  //理论中间值有变动
 	
-	if((SlopeGlobal > 10) || RShiZiFlg) SteerPwmAdd = -140;  
-	else if ((SlopeGlobal < -10) || LShiZiFlg) SteerPwmAdd = 140;
+	if((SlopeGlobal > 10) && !RShiZiFlg) ServoPwmAdd = -140;  
+	else if ((SlopeGlobal < -10) && !LShiZiFlg) ServoPwmAdd = 140;
 
-	SteerPwm = (uint32)(SteerMid + SteerPwmAdd);
+	ServoPwm = (uint32)(ServoMid + ServoPwmAdd);
 	
-	if(SteerPwm >= SteerMAX) SteerPwm = SteerMAX; 
-	if(SteerPwm <= SteerMIN) SteerPwm = SteerMIN;
-	ctimer_pwm_duty(Servo,(uint32)SteerPwm);
+	if(ServoPwm >= ServoMAX) ServoPwm = ServoMAX; 
+	if(ServoPwm <= ServoMIN) ServoPwm = ServoMIN;
+	ctimer_pwm_duty(Servo,(uint32)ServoPwm);
 
 }
 
@@ -262,13 +263,13 @@ void Oledshow(void)
 		    Button_flag=Button_get();
 				if(Button_flag==0x01)
 				{
-				    g_nSpeedLeft_set=100;
-						g_nSpeedRight_set=100;
+				    g_nSpeedLeft_set=180;
+						g_nSpeedRight_set=180;
 				}
 				if(Button_flag==0x02)
 				{
-             g_nSpeedLeft_set=150;
-             g_nSpeedRight_set=150;
+             g_nSpeedLeft_set=185;
+             g_nSpeedRight_set=185;
 				}
 				
 				if(Button_flag==0x04)
@@ -279,8 +280,8 @@ void Oledshow(void)
 		
 				if(Button_flag==0x08)
 				{
-              g_nSpeedLeft_set=-150;
-              g_nSpeedRight_set=-150;
+              g_nSpeedLeft_set=190;
+              g_nSpeedRight_set=190;
 				}
 				if(Button_flag==0x10)
 				{
@@ -361,14 +362,14 @@ void UI_Send(void)
 {
   float UI_Data[8] = {0};
   
-  UI_Data[0] = DuanDian;
-  UI_Data[1] = CenterSlope(0,10);
-  UI_Data[2] = CenterSlope(30,50);
-  UI_Data[3] = CenterSlope(50,70);
-  UI_Data[4] = 0;
-	UI_Data[5] = 0;
+  UI_Data[0] = RShiZiFlg;
+  UI_Data[1] = LShiZiFlg;
+  UI_Data[2] = DuanDian;
+  UI_Data[3] = SlopeNear;
+  UI_Data[4] = SlopeFar;
+	UI_Data[5] = SlopeGlobal;
   UI_Data[6] = 0;
-  UI_Data[7] = 0;
+  UI_Data[7] = Threshold_Value;
    
   vcan_sendware((uint8 *)UI_Data, sizeof(UI_Data));
 }

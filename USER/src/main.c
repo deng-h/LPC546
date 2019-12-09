@@ -116,12 +116,12 @@ int main(void)
 	sct_pwm_duty(PWM_CH_L_Z,900);
 	sct_pwm_duty(PWM_CH_L_F,1000);
  /*----------------------------舵机初始化-------------------------------*/ 
-	ctimer_pwm_init(Servo,100,SteerMid);
+	ctimer_pwm_init(Servo,100,ServoMid);
 	eeprom_init();
 	Menu_Init();                                  //初始化菜单
 	while(!Menu_Work()) systick_delay_ms(200);    //菜单每200ms工作一次，并根据是否按下“关闭菜单”选项后（函数返回0）结束死循环
 //	Correct_Sensor();
-	PID_Parameter_Init(&SteerPID);
+	PID_Parameter_Init(&ServoPID);
 	PID_Parameter_Init(&Left_motor_pid);
 	PID_Parameter_Init(&Right_motor_pid);
 	/*---------------------------定时器中断--------------------------------*/
@@ -140,8 +140,8 @@ int main(void)
 			ScanLine((uint8 *)CameraBinary, MT9V032_W, MT9V032_H);
 		}
 		Oledshow();
-		SteerControl();
-		UI_Send();
+		ServoControl();
+//		UI_Send();
 		
   }
 }

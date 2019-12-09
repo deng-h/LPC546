@@ -1,9 +1,9 @@
 #include "SelfBuild_PID.h"
 
-PID SteerPID = {  //¶æ»úPID
-				3.5,
+PID ServoPID = {  //¶æ»úPID
+				3.5,  //150 3.5
 				0,
-				7,
+				8.5,   //150 8.5
 				140,
 				-140,
 };

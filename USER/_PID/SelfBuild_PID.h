@@ -19,7 +19,7 @@ typedef struct
 }PID;
 
 
-extern PID SteerPID;
+extern PID ServoPID;
 extern PID Left_motor_pid;
 extern PID Right_motor_pid;
 

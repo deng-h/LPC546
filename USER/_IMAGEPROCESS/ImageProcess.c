@@ -80,16 +80,16 @@ void ScanLine(uint8 * imageRet, int width, int height)
 			if(xRight - xRightNow <= 1) RdiuxianFlg[yNow] = 1;  //右丢线
 		}
 		
-		if((1 == LdiuxianFlg[yNow]) && (0 == RdiuxianFlg[yNow]))  //补线
-		{
-			xLeftNow = xRightNow - RoadWidth[119 - yNow];
-		}
-		if((0 == LdiuxianFlg[yNow]) && (1 == RdiuxianFlg[yNow]))
-		{
-			xRightNow = xLeftNow + RoadWidth[119 - yNow];
-		}
+//		if((1 == LdiuxianFlg[yNow]) && (0 == RdiuxianFlg[yNow]))  //补线
+//		{
+//			xLeftNow = xRightNow - RoadWidth[119 - yNow];
+//		}
+//		if((0 == LdiuxianFlg[yNow]) && (1 == RdiuxianFlg[yNow]))
+//		{
+//			xRightNow = xLeftNow + RoadWidth[119 - yNow];
+//		}
 		
-		if(((1 == LdiuxianFlg[yNow]) || (1 == RdiuxianFlg[yNow])) && yNow > 100) DuanDian++;   //最下面左右丢线，断点++
+//		if(((1 == LdiuxianFlg[yNow]) || (1 == RdiuxianFlg[yNow])) && yNow > 100) DuanDian++;   //最下面左右丢线，断点++
 		
 		
 		
